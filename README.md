@@ -13,4 +13,5 @@ Create a `.env` file in the root with the following settings
 ```
 GS_CLIENT_ID=<your-token>
 GS_CLIENT_SECRET=<your-token>
+GS_SHEET_ID=<your google sheet id>
 ```

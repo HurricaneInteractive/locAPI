@@ -66,3 +66,5 @@ Temporary Items
 
 .env
 credentials.json
+token.json
+.vscode
