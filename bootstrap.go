@@ -11,6 +11,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/sheets/v4"
 )
 
 // Retrieve a token, saves the token, then returns the generated client.
@@ -84,4 +85,16 @@ func Sheets() *http.Client {
 	client := getClient(config)
 
 	return client
+}
+
+// Values method to get spread sheet values
+func Values(client *http.Client, id string, name string, rnge string) (*sheets.ValueRange, error) {
+	srv, err := sheets.New(client)
+	if err != nil {
+		log.Fatalf("Unable to retrieve Sheets client: %v", err)
+	}
+
+	readRange := name + "!" + rnge
+	resp, err := srv.Spreadsheets.Values.Get(id, readRange).Do()
+	return resp, err
 }
