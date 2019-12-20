@@ -20,6 +20,7 @@ type LocData struct {
 	Day     string `json:"day"`
 	Time    string `json:"time"`
 	Address string `json:"address"`
+	State   string `json:"state"`
 }
 
 func valuesMapper(resp *sheets.ValueRange) []LocData {
@@ -30,6 +31,7 @@ func valuesMapper(resp *sheets.ValueRange) []LocData {
 			Day:     "",
 			Time:    "",
 			Address: fmt.Sprintf(`%v`, row[2]),
+			State:   fmt.Sprintf(`%v`, row[1]),
 		}
 		data = append(data, d)
 	}
