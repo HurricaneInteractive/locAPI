@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -14,13 +15,38 @@ import (
 	bootstrap "locapi"
 )
 
+// DateTime is the breakdown of time entered/exited
+type DateTime struct {
+	Day  string `json:"day"`
+	Year string `json:"year"`
+	Time string `json:"time"`
+	TOD  string `json:"tod"`
+}
+
 // LocData is the structure that will be returned by the
 // location API
 type LocData struct {
-	Day     string `json:"day"`
-	Time    string `json:"time"`
-	Address string `json:"address"`
-	State   string `json:"state"`
+	DateTime DateTime `json:"datetime"`
+	Address  string   `json:"address"`
+	State    string   `json:"state"`
+}
+
+func separateDateTime(datetime string) DateTime {
+	timeRe := regexp.MustCompile(`(\d+:\d+)`)
+	yearRe := regexp.MustCompile(`(\d{4})`)
+	dayRe := regexp.MustCompile(`(^\w+ \d)`)
+	todRe := regexp.MustCompile(`(AM|PM)`)
+	time := timeRe.FindAllString(datetime, -1)[0]
+	year := yearRe.FindAllString(datetime, -1)[0]
+	day := dayRe.FindAllString(datetime, -1)[0]
+	tod := todRe.FindAllString(datetime, -1)[0]
+
+	return DateTime{
+		Day:  day,
+		Year: year,
+		Time: time,
+		TOD:  tod,
+	}
 }
 
 func valuesMapper(resp *sheets.ValueRange) []LocData {
@@ -28,10 +54,9 @@ func valuesMapper(resp *sheets.ValueRange) []LocData {
 
 	for _, row := range resp.Values {
 		d := LocData{
-			Day:     "",
-			Time:    "",
-			Address: fmt.Sprintf(`%v`, row[2]),
-			State:   fmt.Sprintf(`%v`, row[1]),
+			DateTime: separateDateTime(fmt.Sprintf(`%v`, row[0])),
+			Address:  fmt.Sprintf(`%v`, row[2]),
+			State:    fmt.Sprintf(`%v`, row[1]),
 		}
 		data = append(data, d)
 	}
