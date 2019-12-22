@@ -64,6 +64,13 @@ func valuesMapper(resp *sheets.ValueRange) []LocData {
 	return data
 }
 
+func respondWithError(w http.ResponseWriter, status int, msg string, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	payload := fmt.Sprintf(`{"message": "%s", "error": "%v"}`, msg, err)
+	w.Write([]byte(payload))
+}
+
 func sheetDump(w http.ResponseWriter, r *http.Request) {
 	sheetID := os.Getenv("GS_SHEET_ID")
 	sheetName := os.Getenv("GS_SHEET_NAME")
@@ -73,36 +80,24 @@ func sheetDump(w http.ResponseWriter, r *http.Request) {
 	resp, err := bootstrap.Values(client, sheetID, sheetName, sheetRange)
 
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json")
-		payload := fmt.Sprintf(`{"message": "Unable to retrieve data from sheet", "error": "%v"}`, err)
-		w.Write([]byte(payload))
+		respondWithError(w, http.StatusBadRequest, "Unable to retrieve data from sheet", err)
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	// payload := fmt.Sprintf(`[{"data": %v}]`, valuesMapper(resp))
+	w.WriteHeader(http.StatusOK)
 	payload, _ := json.Marshal(valuesMapper(resp))
 	w.Write([]byte(payload))
 }
 
-func logError(err error, msg string) {
-	if err != nil {
-		fmt.Printf("%s: %v", msg, err)
-	}
-}
-
 func main() {
 	err := godotenv.Load()
-	logError(err, "Error loading .env file")
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
 
 	r := mux.NewRouter()
-	/**
 	api := r.PathPrefix("/api/v1").Subrouter()
-	api.HandleFunc("", home).Methods(http.MethodGet)
-	api.HandleFunc("/user/{userID}/comment/{commentID}", params).Methods(http.MethodGet)
-	*/
-	r.HandleFunc("/", sheetDump).Methods(http.MethodGet)
+	api.HandleFunc("", sheetDump).Methods(http.MethodGet)
 
 	fmt.Printf("Lisiting on port :8080. Visit http://localhost:8080\n")
 	log.Fatal(http.ListenAndServe(":8080", r))
