@@ -32,26 +32,18 @@ type LocData struct {
 }
 
 func separateDateTime(datetime string) DateTime {
-	timeRe := regexp.MustCompile(`(\d+:\d+)`)
-	yearRe := regexp.MustCompile(`(\d{4})`)
-	dayRe := regexp.MustCompile(`(^\w+ \d)`)
-	todRe := regexp.MustCompile(`(AM|PM)`)
-	time := timeRe.FindAllString(datetime, -1)[0]
-	year := yearRe.FindAllString(datetime, -1)[0]
-	day := dayRe.FindAllString(datetime, -1)[0]
-	tod := todRe.FindAllString(datetime, -1)[0]
+	re := regexp.MustCompile(`(^\w+ \d+)|(\d{4})|(\d{2}:\d{2})|(AM|PM)`)
+	matches := re.FindAllString(datetime, -1)
 
 	return DateTime{
-		Day:  day,
-		Year: year,
-		Time: time,
-		TOD:  tod,
+		Day:  matches[0],
+		Year: matches[1],
+		Time: matches[2],
+		TOD:  matches[3],
 	}
 }
 
-func valuesMapper(resp *sheets.ValueRange) []LocData {
-	data := []LocData{}
-
+func valuesMapper(resp *sheets.ValueRange) (data []LocData) {
 	for _, row := range resp.Values {
 		d := LocData{
 			DateTime: separateDateTime(fmt.Sprintf(`%v`, row[0])),
@@ -61,7 +53,7 @@ func valuesMapper(resp *sheets.ValueRange) []LocData {
 		data = append(data, d)
 	}
 
-	return data
+	return
 }
 
 func respondWithError(w http.ResponseWriter, status int, msg string, err error) {
